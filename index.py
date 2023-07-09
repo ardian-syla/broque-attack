@@ -1,14 +1,11 @@
 import requests
-import threading
+from multiprocessing import Process
 
-# Counter variable for the number of threads sent
-thread_count = 0
-
-# Create a lock for thread_count to ensure atomic updates
-thread_count_lock = threading.Lock()
+# Counter variable for the number of processes sent
+process_count = 0
 
 def send_request():
-    global thread_count
+    global process_count
 
     headers = {
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
@@ -36,21 +33,19 @@ def send_request():
 
     response = requests.post('https://iosnemes1s.pythonanywhere.com/', headers=headers, data=data)
 
-    # Update the thread count and print the current count without a new line
-    with thread_count_lock:
-        thread_count += 1
-        print(f"\rNumber of threads sent: {thread_count}", end="")
+    # Update the process count
+    process_count += 1
 
 # Create a flag for stopping the program
 stop_flag = False
 
-# Start the threads
+# Start the processes
+processes = []
 while not stop_flag:
-    thread = threading.Thread(target=send_request)
-    thread.start()
-    thread.join(timeout=1)  # Set a timeout to check for the stop flag
+    process = Process(target=send_request)
+    process.start()
+    processes.append(process)
 
-# Wait for all remaining threads to complete
-for thread in threading.enumerate():
-    if thread != threading.current_thread():
-        thread.join()
+# Wait for all remaining processes to complete
+for process in processes:
+    process.join()
